@@ -1,0 +1,18 @@
+{
+  "tracking": [
+    {
+      "path_file": "C:\\temp\\report.csv",
+      "diagram_types": [
+        "graph", "class"
+      ],
+      "methods": null
+    },
+    {
+      "path_file": "C:\\temp\\report2.csv",
+      "diagram_types": [
+        "graph", "class"
+      ],
+      "methods": null
+    }
+  ]
+}
