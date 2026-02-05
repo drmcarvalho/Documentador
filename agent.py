@@ -43,7 +43,7 @@ def make_request(url, payload, headers, method="GET"):
         return {response.read().decode(), response.code}
     except HTTPError as e:
         logger.error("An error occurred during the HTTP request")
-        return {None, e.code}
+        return {e.read().decode(), e.code}
 
 
 class DocumentadorAgent:
@@ -124,14 +124,24 @@ class DocumentadorAgent:
                 f"{multiprocessing.current_process()} got CTRL-C at {self._watch_config.__name__ }"
             )
 
-    def _send_prompt(self):
-        pass
+    @staticmethod
+    def _parse(text):
+        try:
+            return json.loads(text)
+        except ValueError as e:
+            logger.error(f"Invalid json: {e}")
+            return None
+
+    @staticmethod
+    def _get_result_from_gemini(data):
+        return data  # TODO: parse result from gemini
 
     def _watch_files(self):
         try:
             updatefile = 0
             while True:
                 tracking = self._config["tracking"]
+                output_dir = self._config["output"]
                 if tracking:
                     for trackfile in tracking:
                         file = Path(trackfile["path_file"])
@@ -141,10 +151,13 @@ class DocumentadorAgent:
                             updatefile = st.st_mtime
                             types = trackfile["diagram_types"]
                             with open(file.resolve(), "r") as f:
+                                output_file_content = None
                                 data = f.read()
                                 if not data:
                                     logger.info(f"The file {file.name} is empty")
                                     continue
+                                if "class" in types:
+                                    pass  # TODO: generate class diagram
                                 if "graph" in types:
                                     prompt = self._prompt_cfg.format(code=data)
                                     content, code = make_request(
@@ -167,9 +180,18 @@ class DocumentadorAgent:
                                         "POST",
                                     )
                                     if 200 <= code <= 299:
-                                        pass
-                                if "class" in types:
-                                    pass  # TODO: generate class diagram
+                                        response = self._parse(content)
+                                        if not response:
+                                            logger.info("Cannot parse the response from the API.")
+                                            continue
+                                        output_file_content = self._get_result_from_gemini(response)
+                            if output_file_content:
+                                file_name = f"{file.name}_cfg.txt"
+                                file_path = output_dir / file_name
+                                with open(file_path, "w") as out_file:
+                                    out_file.write(output_file_content)
+                            else:
+                                logger.info("No content was returned by the LLM to create the diagram.")
                 time.sleep(60)
         except KeyboardInterrupt:
             logger.info(
