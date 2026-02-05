@@ -142,6 +142,7 @@ class DocumentadorAgent:
                             with open(file.resolve(), "r") as f:
                                 data = f.read()
                                 if not data:
+                                    logger.info(f"The file {file.name} is empty")
                                     continue
                                 if "graph" in trackfile:
                                     prompt = self._prompt_cfg.format(code=data)
