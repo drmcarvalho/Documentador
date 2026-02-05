@@ -150,8 +150,8 @@ class DocumentadorAgent:
                             logger.info(f"File changed: {file.name}")
                             updatefile = st.st_mtime
                             types = trackfile["diagram_types"]
+                            output_file_content = None
                             with open(file.resolve(), "r") as f:
-                                output_file_content = None
                                 data = f.read()
                                 if not data:
                                     logger.info(f"The file {file.name} is empty")
