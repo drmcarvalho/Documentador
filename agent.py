@@ -14,7 +14,7 @@ logging_config = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "level": "INFO",  # Set level to INFO or higher
+            "level": "INFO",
         },
     },
     "root": {
