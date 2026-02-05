@@ -26,6 +26,7 @@ logging_config = {
 CONFIG_ERROR_MESSAGE = "Configuration error: The JSON structure is invalid (schema mismatch) or " \
                        "the file path specified in 'path_file' was not found or "\
                        "the path specified in 'output' was not found."
+CONFIG_ERROR_INVALID_MESSAGE = "The config.json file is invalid"
 
 logging.config.dictConfig(logging_config)
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ def make_request(url, data, headers, method="GET"):
         payload = json.dumps(data).encode('utf-8')
         req = Request(url, data=payload, headers=headers, method=method)
         response = urlopen(req)
-        return {response, response.code}
+        return {response.read().decode(), response.code}
     except HTTPError as e:
         logger.error("An error occurred during the HTTP request")
         return {None, e.code}
@@ -54,7 +55,10 @@ class DocumentadorAgent:
             with open(self._config_path, "rb") as file:
                 jsondata = file.read()
                 if not jsondata:
-                    raise ValueError("The config.json file is invalid")
+                    if first_time:
+                        raise RuntimeError(CONFIG_ERROR_INVALID_MESSAGE)
+                    else:
+                        raise ValueError(CONFIG_ERROR_INVALID_MESSAGE)
                 new_config = json.loads(jsondata)
                 is_valid = self._is_valid_config_scheme(new_config)
                 if not is_valid:
@@ -112,9 +116,9 @@ class DocumentadorAgent:
 
     def _watch_files(self):
         try:
-            tracking = self._config["tracking"]
             updatefile = 0
             while True:
+                tracking = self._config["tracking"]
                 if tracking:
                     for trackfile in tracking:
                         file = Path(trackfile["path_file"])
