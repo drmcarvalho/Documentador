@@ -92,7 +92,7 @@ class DocumentadorAgent:
                         logger.error(f"Could not update config:\n\t{e}")
                 time.sleep(5)
         except KeyboardInterrupt:
-            logger.info(f"{multiprocessing.current_process()} got CTRL-C")
+            logger.info(f"{multiprocessing.current_process()} got CTRL-C at {self._watch_config.__name__ }")
 
     def _send_prompt(self):
         pass
@@ -111,7 +111,7 @@ class DocumentadorAgent:
                             logger.info(f"File changed: {file.name}")
                 time.sleep(3)
         except KeyboardInterrupt:
-            logger.info(f"{multiprocessing.current_process()} got CTRL-C")
+            logger.info(f"{multiprocessing.current_process()} got CTRL-C at {self._watch_files.__name__}")
 
     def start(self):
         for target in (self._watch_config, self._watch_files):
