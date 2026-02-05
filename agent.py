@@ -4,6 +4,8 @@ import time
 from pathlib import Path
 from multiprocessing import Process
 import logging.config
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 
 
 logging_config = {
@@ -27,6 +29,17 @@ CONFIG_ERROR_MESSAGE = "Configuration error: The JSON structure is invalid (sche
 
 logging.config.dictConfig(logging_config)
 logger = logging.getLogger(__name__)
+
+
+def make_request(url, data, headers, method="GET"):
+    try:
+        payload = json.dumps(data).encode('utf-8')
+        req = Request(url, data=payload, headers=headers, method=method)
+        response = urlopen(req)
+        return {response, response.code}
+    except HTTPError as e:
+        logger.error("An error occurred during the HTTP request")
+        return {None, e.code}
 
 
 class DocumentadorAgent:
