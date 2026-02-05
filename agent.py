@@ -7,19 +7,23 @@ import logging.config
 
 
 logging_config = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'level': 'INFO',  # Set level to INFO or higher
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",  # Set level to INFO or higher
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
     },
 }
+
+CONFIG_ERROR_MESSAGE = "Configuration error: The JSON structure is invalid (schema mismatch) or " \
+                       "the file path specified in 'path_file' was not found or "\
+                       "the path specified in 'output' was not found."
 
 logging.config.dictConfig(logging_config)
 logger = logging.getLogger(__name__)
@@ -42,29 +46,29 @@ class DocumentadorAgent:
                 is_valid = self._is_valid_config_scheme(new_config)
                 if not is_valid:
                     if first_time:
-                        raise RuntimeError(
-                            "Configuration error: The JSON structure is invalid (schema mismatch) or "
-                            "the file path specified in 'path_file' was not found."
-                        )
+                        raise RuntimeError(CONFIG_ERROR_MESSAGE)
                     else:
-                        raise ValueError(
-                            "Configuration error: The JSON structure is invalid (schema mismatch) or "
-                            "the file path specified in 'path_file' was not found."
-                        )
+                        raise ValueError(CONFIG_ERROR_MESSAGE)
                 self._config = new_config
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON format in config.json: {e}")
 
     @staticmethod
     def _is_valid_config_scheme(conf):
-        if "tracking" in conf and isinstance(conf["tracking"], list):
+        if (
+            "tracking" in conf
+            and isinstance(conf["tracking"], list)
+            and "output" in conf
+            and isinstance(conf["output"], str)
+            and Path(conf["output"]).is_dir()
+        ):
             if conf["tracking"]:
                 for item in conf["tracking"]:
                     if (
-                            "path_file" not in item
-                            or "diagram_types" not in item
-                            or not isinstance(item["diagram_types"], list)
-                            or not isinstance(item["path_file"], str)
+                        "path_file" not in item
+                        or "diagram_types" not in item
+                        or not isinstance(item["diagram_types"], list)
+                        or not isinstance(item["path_file"], str)
                     ):
                         return False
                     file = Path(item["path_file"])
@@ -100,7 +104,7 @@ class DocumentadorAgent:
             while True:
                 if tracking:
                     for trackfile in tracking:
-                        file = Path(trackfile['path_file'])
+                        file = Path(trackfile["path_file"])
                         st = file.stat()
                         if st.st_mtime > updatefile:
                             updatefile = st.st_mtime
