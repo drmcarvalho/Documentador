@@ -137,14 +137,15 @@ class DocumentadorAgent:
                         file = Path(trackfile["path_file"])
                         st = file.stat()
                         if st.st_mtime > updatefile:
-                            updatefile = st.st_mtime
                             logger.info(f"File changed: {file.name}")
+                            updatefile = st.st_mtime
+                            types = trackfile["diagram_types"]
                             with open(file.resolve(), "r") as f:
                                 data = f.read()
                                 if not data:
                                     logger.info(f"The file {file.name} is empty")
                                     continue
-                                if "graph" in trackfile:
+                                if "graph" in types:
                                     prompt = self._prompt_cfg.format(code=data)
                                     content, code = make_request(
                                         constants.API_URL_GEMINI,
@@ -167,7 +168,7 @@ class DocumentadorAgent:
                                     )
                                     if 200 <= code <= 299:
                                         pass
-                                if "class" in trackfile:
+                                if "class" in types:
                                     pass  # TODO: generate class diagram
                 time.sleep(60)
         except KeyboardInterrupt:
